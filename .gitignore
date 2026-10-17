@@ -1,0 +1,20 @@
+# data
+*.parquet
+*.csv
+*.zip
+data/
+
+# python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# secrets and environment
+.env
+*.token
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
