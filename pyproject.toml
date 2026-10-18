@@ -11,6 +11,9 @@ dev = [
     "databricks-connect~=18.0.0",
 ]
 
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+
 [tool.databricks.environment]
 environment_version = "5"
 

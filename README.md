@@ -26,13 +26,16 @@ flowchart LR
         T --> B[("workspace.taxi_bronze.yellow_trips\n(Delta Table)")]
     end
 
-    subgraph SilverLayer ["3. Silver Layer (Planned)"]
-        B --> S[("workspace.taxi_silver.trips_cleaned\n(Enriched & Validated)")]
+    subgraph SilverLayer ["3. Silver Layer"]
+        B --> S1["Quality Rules & Zone Enrichment\n(taxi_lakehouse.silver)"]
+        S1 --> S[("workspace.taxi_silver.yellow_trips\n(Delta Table)")]
     end
 
-    subgraph GoldLayer ["4. Gold Layer (Planned)"]
-        S --> G1[("workspace.taxi_gold.daily_metrics")]
-        S --> G2[("workspace.taxi_gold.zone_performance")]
+    subgraph GoldLayer ["4. Gold Layer"]
+        S --> G0["Business Aggregations\n(taxi_lakehouse.gold)"]
+        G0 --> G1[("workspace.taxi_gold.daily_metrics")]
+        G0 --> G2[("workspace.taxi_gold.zone_performance")]
+        G0 --> G3[("workspace.taxi_gold.hourly_demand")]
     end
 ```
 
@@ -42,8 +45,8 @@ flowchart LR
 |---|---|---|---|
 | **Raw / Landing** | `/Volumes/workspace/taxi_raw/landing/` | Direct download landing zone for monthly yellow taxi parquet files and zone lookup CSV. | Parquet, CSV |
 | **Bronze** | `workspace.taxi_bronze.yellow_trips` | Standardized raw data: snake_case column normalization and strict PySpark type casting. | Delta Lake |
-| **Silver** *(in progress)* | `workspace.taxi_silver` | Cleaned trips filtered for valid coordinates, non-negative fares/distances, enriched with zone names. | Delta Lake |
-| **Gold** *(planned)* | `workspace.taxi_gold` | Aggregated business KPIs (hourly demand, average fare/tip by zone, congestion pricing impact). | Delta Lake |
+| **Silver** | `workspace.taxi_silver.yellow_trips` | Cleaned trips filtered for non-null timestamps, positive fares/distances, enriched with taxi zone names, and deduplicated. | Delta Lake |
+| **Gold** | `workspace.taxi_gold.*` | Curated business models: `daily_metrics`, `zone_performance` (routes), and `hourly_demand`. | Delta Lake |
 
 ---
 
@@ -54,16 +57,20 @@ nyc_taxi-DB-DE/
 ├── .databricks/                  # Databricks workspace configuration & state
 ├── .vscode/                      # VS Code Databricks extension settings
 ├── notebooks/                    # Interactive analysis and pipeline notebooks
-│   ├── 00_setup.ipynb            # Creates schemas, volumes, and downloads raw data
-│   ├── 01_explore_schema.ipynb   # Data discovery, date partitioning, and schema inspection
+│   ├── 000_setup.ipynb           # Creates schemas, volumes, and downloads raw data
+│   ├── 001_explore_schema.ipynb  # Data discovery, date partitioning, and schema inspection
 │   ├── 01_bronze.ipynb           # Ingestion & schema application into Bronze Delta table
+│   ├── 02_silver.ipynb           # Quality cleansing, feature engineering & zone enrichment
+│   ├── 03_gold.ipynb             # Daily, zone corridor, and hourly analytical KPI tables
 │   └── test-experimentations/    # Local verification & testing notebooks
-│       ├── test_conformity_2.ipynb # Row count and schema consistency verification
-│       └── test_local_db.ipynb   # Databricks Connect local interactive session test
 ├── src/                          # Reusable Python lakehouse library
 │   └── taxi_lakehouse/
 │       ├── __init__.py
-│       └── schema.py             # Column rename mappings, TARGET_SCHEMA, and apply_schema()
+│       ├── schema.py             # Column renames, TARGET_SCHEMA, and apply_schema()
+│       ├── silver.py             # clean_yellow_trips(), enrich_with_zones(), build_silver_trips()
+│       └── gold.py               # build_daily_metrics(), build_zone_performance(), build_hourly_demand()
+├── tests/                        # Automated unit tests for pipeline transformations
+│   └── test_lakehouse.py
 ├── databricks.yml                # Databricks Asset Bundle (DAB) declaration
 ├── pyproject.toml                # Project metadata, dependencies, and environment locks
 ├── uv.lock                       # Deterministic dependency resolution file
@@ -154,7 +161,8 @@ The 20 standardized fields enforced by `taxi_lakehouse.schema.TARGET_SCHEMA`:
 - [x] Unity Catalog schema & landing volume setup
 - [x] Python package structure with schema casting utilities
 - [x] Bronze layer Delta table ingestion
-- [ ] Silver layer data quality rules (timestamp validity, positive amounts)
-- [ ] Dimension lookup join with Taxi Zones (`taxi_zone_lookup.csv`)
+- [x] Silver layer data quality rules (timestamp validity, positive amounts, duration/distance sanity)
+- [x] Dimension lookup join with Taxi Zones (`taxi_zone_lookup.csv`)
+- [x] Gold layer curated KPI models (`daily_metrics`, `zone_performance`, `hourly_demand`)
 - [ ] Automated scheduled jobs defined via Databricks Asset Bundles workflow
 - [ ] Data quality assertions with Great Expectations or Delta Live Tables (DLT)
