@@ -2,6 +2,7 @@ from pyspark.sql.types import (
     StructType, StructField, IntegerType, DoubleType,
     StringType, TimestampNTZType,
 )
+from pyspark.sql import DataFrame, functions as F
 
 # source column name -> clean name (columns not listed keep their name)
 RENAMES = {
@@ -37,3 +38,13 @@ TARGET_SCHEMA = StructType([
     StructField("airport_fee", DoubleType()),
     StructField("cbd_congestion_fee", DoubleType()),
 ])
+
+def apply_schema(df: DataFrame) -> DataFrame:
+    # 1. Rename the columns using RENAMES
+    for old, new in RENAMES.items():
+        df = df.withColumnRenamed(old, new)
+
+    # 2. Cast every column to the type in TARGET_SCHEMA
+    for field in TARGET_SCHEMA.fields:
+        df = df.withColumn(field.name, F.col(field.name).cast(field.dataType))
+    return df
