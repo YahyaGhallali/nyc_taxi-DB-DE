@@ -17,10 +17,10 @@ def conform(df: DataFrame, source_file: str) -> DataFrame:
     match = re.search(r"(\d{4}-\d{2})", source_file)
     source_month = match.group(1) if match else None
 
-    df = (
-        df.withColumn("source_file", F.lit(source_file))
-        .withColumn("source_month", F.lit(source_month))
-        .withColumn("ingestion_ts", F.current_timestamp())
-    )
+    # df = (
+    #     df.withColumn("source_file", F.lit(source_file))
+    #     .withColumn("source_month", F.lit(source_month))
+    #     .withColumn("ingestion_ts", F.current_timestamp())
+    # )
 
     return df

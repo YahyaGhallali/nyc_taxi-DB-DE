@@ -1,0 +1,9 @@
+pyproject.toml
+src/nyc_taxi_DB_DE.egg-info/PKG-INFO
+src/nyc_taxi_DB_DE.egg-info/SOURCES.txt
+src/nyc_taxi_DB_DE.egg-info/dependency_links.txt
+src/nyc_taxi_DB_DE.egg-info/requires.txt
+src/nyc_taxi_DB_DE.egg-info/top_level.txt
+src/taxi_lakehouse/__init__.py
+src/taxi_lakehouse/conform.py
+src/taxi_lakehouse/schema.py
